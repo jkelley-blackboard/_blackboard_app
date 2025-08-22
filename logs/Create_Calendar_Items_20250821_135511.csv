@@ -1,0 +1,3 @@
+course_external_id,title,start,end,description,status,error,bb_url
+JeffTest20250129,Test Event 1,2025-08-25T10:00:00Z,2025-08-25T11:00:00Z,This is a test event,failed,400 Client Error:  for url: https://nahe.blackboard.com/learn/api/public/v1/calendars/items?courseId=_361_1,https://nahe.blackboard.com
+JeffTest20250129,Test Event 2,2025-08-26T14:00:00Z,2025-08-26T15:30:00Z,Another test event,failed,400 Client Error:  for url: https://nahe.blackboard.com/learn/api/public/v1/calendars/items?courseId=_361_1,https://nahe.blackboard.com

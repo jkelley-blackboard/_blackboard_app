@@ -1,0 +1,15 @@
+
+Application key
+8c73efd4-857a-48ff-8dc2-441fbf1f054c
+Secret
+wsTrPAz5OD0Bc5UbCidg8Sau4LOl2msk
+Application ID
+403b9fd4-aa50-46fb-902d-c2782214a56b
+Issuer
+https://blackboard.com
+Public keyset URL
+https://developer.blackboard.com/keys/jwks
+Auth token endpoint
+https://developer.blackboard.com/api/v1/gateway/oauth2/jwttoken
+OIDC auth request endpoint
+https://developer.blackboard.com/api/v1/gateway/oidcauth

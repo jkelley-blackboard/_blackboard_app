@@ -1,0 +1,3 @@
+status,courseExternalId,error
+failed,,Failed to resolve course externalId (0): 401 Client Error:  for url: https://nahe.blackboard.com/learn/api/public/v1/oauth2/token
+failed,,Failed to resolve course externalId (0): 401 Client Error:  for url: https://nahe.blackboard.com/learn/api/public/v1/oauth2/token
