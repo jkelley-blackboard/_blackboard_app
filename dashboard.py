@@ -22,7 +22,8 @@ st.title("📊 Blackboard REST API Dashboard")
 # ----------------------------
 st.sidebar.header("Blackboard Configuration")
 
-bb_url = st.sidebar.text_input("Base URL", "https://nahe.blackboard.com")
+# Start with empty URL so user must enter it
+bb_url = st.sidebar.text_input("Base URL", "")
 test_mode = st.sidebar.checkbox("Run in Test Mode (no data committed to Blackboard)")
 task = st.sidebar.selectbox(
     "Choose a task",
