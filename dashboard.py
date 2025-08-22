@@ -3,36 +3,30 @@ import pandas as pd
 import requests
 from api_client import BlackboardAuth
 from config import BLACKBOARD_KEY, BLACKBOARD_SECRET
-from tasks import calendar, content, admins
+from task_registry import TASK_REGISTRY
 
 # ----------------------------
-# Page Configuration
+# Streamlit Page Setup
 # ----------------------------
 st.set_page_config(page_title="Blackboard REST API Dashboard", layout="wide")
-
-# Logo/Header
 st.image(
     "https://www.anthology.com/imgs/logos/anthology-logo-black.svg",
-    width=180  # smaller logo
+    width=180
 )
 st.title("📊 Blackboard REST API Dashboard")
 
 # ----------------------------
-# Sidebar Inputs (Left Column)
+# Sidebar Inputs
 # ----------------------------
 st.sidebar.header("Blackboard Configuration")
 
-# Start with empty URL so user must enter it
 bb_url = st.sidebar.text_input("Base URL", "")
 test_mode = st.sidebar.checkbox("Run in Test Mode (no data committed to Blackboard)")
-task = st.sidebar.selectbox(
-    "Choose a task",
-    ("Calendar Events", "Content Updates", "Assign Node Admins")
-)
+task_name = st.sidebar.selectbox("Choose a task", list(TASK_REGISTRY.keys()))
+task_obj = TASK_REGISTRY[task_name]
 
 auth = None
-system_version = None
-url_valid = False  # Track if URL is validated
+url_valid = False
 
 # ----------------------------
 # URL Validation & Version Display
@@ -43,16 +37,11 @@ if bb_url:
         version_url = f"{bb_url}/learn/api/public/v1/system/version"
         resp = requests.get(version_url, headers=auth.headers(), timeout=10)
         if resp.status_code == 200:
-            system_version = resp.json()
-            learn = system_version.get("learn", {})
-            major = learn.get("major", 0)
-            minor = learn.get("minor", 0)
-            patch = learn.get("patch", 0)
-            build = learn.get("build", "N/A")
-
+            v = resp.json().get("learn", {})
             st.sidebar.success("✅ URL validated")
-            st.sidebar.info(f"Learn Version: {major}.{minor}.{patch} (build {build})")
-
+            st.sidebar.info(
+                f"Learn Version: {v.get('major',0)}.{v.get('minor',0)}.{v.get('patch',0)} (build {v.get('build','N/A')})"
+            )
             url_valid = True
         else:
             st.sidebar.error("❌ Unable to validate URL")
@@ -62,33 +51,43 @@ if bb_url:
         st.sidebar.error("❌ Unable to connect to Blackboard.")
 
 # ----------------------------
-# Main Column: CSV Upload & Task Execution
+# Main Column: Data Input
 # ----------------------------
 if url_valid:
-    uploaded_file = st.file_uploader("Upload a CSV file", type="csv")
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        st.write("📂 Preview of Uploaded Data")
-        st.dataframe(df.head())
+    st.subheader(f"{task_obj.name} Data Input")
+    st.write(task_obj.description)
 
-        # Run Task button enabled only if CSV is uploaded
-        run_task_button = st.button("Run Task")
-        if run_task_button:
-            if task == "Calendar Events":
-                log = calendar.process(auth, df, test_mode)
-            elif task == "Content Updates":
-                log = content.process(auth, df, test_mode)
-            elif task == "Assign Node Admins":
-                log = admins.process(auth, df, test_mode)
-            else:
-                log = pd.DataFrame([{"status": "failed", "error": "Unknown task"}])
+    input_method = st.radio("Input Method", ["Upload CSV", "Enter Data Manually"])
+    df = None
 
+    # ----------------------------
+    # CSV Upload
+    # ----------------------------
+    if input_method == "Upload CSV":
+        uploaded_file = st.file_uploader("Upload CSV", type="csv")
+        if uploaded_file:
+            df = pd.read_csv(uploaded_file)
+            st.write("📂 Preview of Uploaded Data")
+            st.dataframe(df.head())
+
+    # ----------------------------
+    # Manual Data Entry
+    # ----------------------------
+    elif input_method == "Enter Data Manually":
+        df = st.data_editor(pd.DataFrame(columns=task_obj.columns), num_rows="dynamic")
+        st.write("📂 Preview of Entered Data")
+        st.dataframe(df)
+
+    # ----------------------------
+    # Run Task Button
+    # ----------------------------
+    if df is not None and not df.empty:
+        if st.button("Run Task"):
+            log = task_obj.process(auth, df, test_mode)
             st.subheader("📑 Processing Log")
             st.dataframe(log)
 
-            # Save log file
-            log_file = "processing_log.csv"
-            log.to_csv(log_file, index=False)
+            # Download log
             st.download_button(
                 label="Download Log",
                 data=log.to_csv(index=False),
@@ -96,6 +95,7 @@ if url_valid:
                 mime="text/csv",
             )
     else:
-        st.info("⚠️ Upload a CSV file to enable task execution.")
+        st.info("⚠️ Upload or enter data to enable task execution.")
+
 else:
     st.info("⚠️ Please enter and validate a Blackboard URL to enable tasks.")
